@@ -86,8 +86,10 @@ public class GwtCompileConfig implements Action<GwtCompileTask> {
    * 2. Add the package directory for each entry-point to the source paths.
    * 3. Extract the source paths from the GWT module XML file.
    * 4. Extract the public paths from the GWT module XML file.
-   * <br><br>
-   * As mentioned in <a href="https://www.gwtproject.org/doc/latest/DevGuideOrganizingProjects.html">https://www.gwtproject.org/doc/latest/DevGuideOrganizingProjects.html</a>
+   * <br>
+   * <br>
+   * As mentioned in <a href=
+   * "https://www.gwtproject.org/doc/latest/DevGuideOrganizingProjects.html">https://www.gwtproject.org/doc/latest/DevGuideOrganizingProjects.html</a>
    * if no source or public element is defined in a module XML file, the
    * client and public subpackage is implicitly added to the source/public
    * path as if <source path="client" /> or <public path="public"> had been
@@ -103,18 +105,21 @@ public class GwtCompileConfig implements Action<GwtCompileTask> {
 
       File moduleParent = moduleFile.getParentFile();
       // Find the source root by searching 'src/main/java' in module parent
+      String source_dir = "src/main/java";
+      source_dir = "src";
       int index = moduleParent.getAbsolutePath().replaceAll("\\\\", "/")
-          .indexOf("src/main/java");
+          .indexOf(source_dir);
       File sourceRoot = null;
       if (index > 0) {
         sourceRoot = new File(
             moduleParent.getAbsolutePath().substring(0, index),
-            "src/main/java");
+            source_dir);
       }
       if (sourceRoot == null || !sourceRoot.exists()) {
         throw new GradleException(
-            "Source root 'src/main/java' cannot be found: " + sourceRoot);
+            "bmh*****: Source root '" + source_dir + "' cannot be found: " + sourceRoot);
       }
+      log.info("bmh*****: Found sourceRoot {}", sourceRoot.getAbsolutePath());
 
       // Add the package directory for each entry-point to the source paths
       NodeList entryPointNodes = doc.getElementsByTagName("entry-point");
@@ -124,6 +129,7 @@ public class GwtCompileConfig implements Action<GwtCompileTask> {
         String packageName = path.substring(0, path.lastIndexOf('.'));
         String packagePath = packageName.replace('.', '/');
         File packageDir = new File(sourceRoot, packagePath);
+        log.info("bmh****: add entry-point {}", packageDir.getAbsolutePath());
         sourcePaths.add(packageDir);
       }
 
@@ -132,6 +138,7 @@ public class GwtCompileConfig implements Action<GwtCompileTask> {
       if (sourceNodes.getLength() == 0) {
         File defaultClientDir = new File(moduleParent, "client");
         if (defaultClientDir.exists()) {
+          log.info("bmh*****: Add defaultClientDir {}", defaultClientDir.getAbsolutePath());
           sourcePaths.add(defaultClientDir);
         }
       } else {
@@ -139,6 +146,7 @@ public class GwtCompileConfig implements Action<GwtCompileTask> {
           String path = sourceNodes.item(i).getAttributes().getNamedItem("path")
               .getNodeValue();
           File sourceDir = new File(moduleParent, path);
+          log.info("bmh*****: Add sourceDir {}", sourceDir.getAbsolutePath());
           sourcePaths.add(sourceDir);
         }
       }
@@ -148,6 +156,7 @@ public class GwtCompileConfig implements Action<GwtCompileTask> {
       if (publicNodes.getLength() == 0) {
         File defaultPublickDir = new File(moduleParent, "public");
         if (defaultPublickDir.exists()) {
+          log.info("bmh*****: Add defaultPublickDir {}", defaultPublickDir.getAbsolutePath());
           sourcePaths.add(defaultPublickDir);
         }
       } else {
@@ -155,17 +164,20 @@ public class GwtCompileConfig implements Action<GwtCompileTask> {
           String path = publicNodes.item(i).getAttributes().getNamedItem("path")
               .getNodeValue();
           File publicDir = new File(moduleParent, path);
+          log.info("bmh*****: Add publicDir {}", publicDir.getAbsolutePath());
           sourcePaths.add(publicDir);
         }
       }
     } catch (Exception e) {
       log.error("Error reading GWT module file: {}", moduleFile, e);
     }
+    log.info("bmh*****: GWT module files found: {}", sourcePaths);
     return sourcePaths;
   }
 
   @Override
   public void execute(GwtCompileTask task) {
+    log.info("bmh*****: GWT Compile enter execute method");
     Project project = task.getProject();
     Logger log = project.getLogger();
 
@@ -229,7 +241,7 @@ public class GwtCompileConfig implements Action<GwtCompileTask> {
     }
     if (extension.getCompiler().getIncludeJsInteropExports().isPresent()
         && !extension.getCompiler().getIncludeJsInteropExports().get()
-        .isEmpty()) {
+            .isEmpty()) {
       task.getIncludeJsInteropExports()
           .set(extension.getCompiler().getIncludeJsInteropExports().get());
     } else {
@@ -238,7 +250,7 @@ public class GwtCompileConfig implements Action<GwtCompileTask> {
     }
     if (extension.getCompiler().getExcludeJsInteropExports().isPresent()
         && !extension.getCompiler().getExcludeJsInteropExports().get()
-        .isEmpty()) {
+            .isEmpty()) {
       task.getExcludeJsInteropExports()
           .set(extension.getCompiler().getExcludeJsInteropExports().get());
     } else {

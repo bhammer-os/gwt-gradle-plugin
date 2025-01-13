@@ -4,6 +4,9 @@
 # Ignore Gradle build output directory
 build
 
+# Ignore bin directory which might be created by VSCode or Intellij
+bin
+
 **/.DS_Store
 plugin/src/test/resources/sample-gwt-project/gradle
 plugin/src/test/resources/sample-gwt-project/gradlew

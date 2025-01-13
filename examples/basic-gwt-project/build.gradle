@@ -1,6 +1,8 @@
 plugins {
+  id 'war'
   id 'java'
   id "org.docstr.gwt" version "2.1.6"
+  id 'com.github.sahara3.tomcat-runner' version '0.3.0'
 }
 
 group = 'com.example'
@@ -31,6 +33,15 @@ gwt {
   gwtTest {
     // testTasks = null
     testTasks = ['test']
+  }
+}
+
+tomcat {
+  version = '9.0.86'
+  port = 8080
+
+  webapp(project) {
+    contextPath = 'app'
   }
 }
 

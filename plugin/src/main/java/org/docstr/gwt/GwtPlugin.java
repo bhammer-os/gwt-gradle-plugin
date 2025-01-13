@@ -24,106 +24,127 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.testing.Test;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A plugin that adds GWT support to a project.
  */
+@Slf4j
 public class GwtPlugin implements Plugin<Project> {
 
-  private static final String GWT_VERSION = "2.12.1";
+        private static final String GWT_VERSION = "2.12.1";
 
-  private Project project;
+        private Project project;
 
-  public void apply(Project project) {
-    this.project = project;
+        public void apply(Project project) {
+                this.project = project;
 
-    // Ensure the Java plugin is applied if it hasn't been applied yet
-    if (!project.getPlugins().hasPlugin(JavaPlugin.class)) {
-      project.getPlugins().apply(JavaPlugin.class);
-    }
+                // Ensure the Java plugin is applied if it hasn't been applied yet
+                if (!project.getPlugins().hasPlugin(JavaPlugin.class)) {
+                        project.getPlugins().apply(JavaPlugin.class);
+                }
 
-    GwtPluginExtension extension = createGwtExtension();
-    configureGwtProject(extension);
-    configureGwtTasks(extension);
-  }
+                GwtPluginExtension extension = createGwtExtension();
+                configureGwtProject(extension);
+                configureGwtTasks(extension);
+        }
 
-  private GwtPluginExtension createGwtExtension() {
-    // Register the GWT extension
-    GwtPluginExtension extension = project.getExtensions()
-        .create("gwt", GwtPluginExtension.class);
+        private GwtPluginExtension createGwtExtension() {
+                // Register the GWT extension
+                GwtPluginExtension extension = project.getExtensions()
+                                .create("gwt", GwtPluginExtension.class);
 
-    // Set default values for the extension
-    extension.getWar().convention(project.getLayout().getBuildDirectory()
-        .dir("gwt/war"));
-    extension.getDeploy().convention(project.getLayout().getBuildDirectory()
-        .dir("gwt/deploy"));
-    extension.getGen().convention(project.getLayout().getBuildDirectory()
-        .dir("gwt/gen"));
-    extension.getExtra().convention(project.getLayout().getBuildDirectory()
-        .dir("gwt/extra"));
-    extension.getCacheDir().convention(project.getLayout().getBuildDirectory()
-        .dir("gwt/gwt-unitCache"));
-    return extension;
-  }
+                // Set default values for the extension
+                extension.getWar().convention(project.getLayout().getBuildDirectory()
+                                .dir("gwt/war"));
+                extension.getDeploy().convention(project.getLayout().getBuildDirectory()
+                                .dir("gwt/deploy"));
+                extension.getGen().convention(project.getLayout().getBuildDirectory()
+                                .dir("gwt/gen"));
+                extension.getExtra().convention(project.getLayout().getBuildDirectory()
+                                .dir("gwt/extra"));
+                extension.getCacheDir().convention(project.getLayout().getBuildDirectory()
+                                .dir("gwt/gwt-unitCache"));
+                return extension;
+        }
 
-  private void configureGwtProject(GwtPluginExtension extension) {
-    project.afterEvaluate(p -> {
-      // default to GWT_VERSION if not set
-      String gwtVersion = extension.getGwtVersion().getOrElse(GWT_VERSION);
+        private void configureGwtProject(GwtPluginExtension extension) {
+                project.afterEvaluate(p -> {
+                        log.info("bmh***** configureGwtProject ******");
+                        // default to GWT_VERSION if not set
+                        String gwtVersion = extension.getGwtVersion().getOrElse(GWT_VERSION);
 
-      // Add GWT dependencies automatically based on the gwtVersion in the extension
-      project.getDependencies()
-          .add("implementation", "org.gwtproject:gwt-user:" + gwtVersion);
-      project.getDependencies()
-          .add("implementation", "org.gwtproject:gwt-dev:" + gwtVersion);
-      project.getDependencies()
-          .add("implementation", "org.gwtproject:gwt-codeserver:" + gwtVersion);
+                        // Add GWT dependencies automatically based on the gwtVersion in the extension
+                        if (gwtVersion.equals("2.7.0")) {
+                                log.info("bmh***** dependency add with version 2.7.0 use com.google.gwt");
+                                project.getDependencies()
+                                                .add("implementation", "com.google.gwt:gwt-user:" + gwtVersion);
+                                project.getDependencies()
+                                                .add("implementation", "com.google.gwt:gwt-dev:" + gwtVersion);
+                                project.getDependencies()
+                                                .add("implementation", "com.google.gwt:gwt-codeserver:" + gwtVersion);
+                        } else {
+                                project.getDependencies()
+                                                .add("implementation", "org.gwtproject:gwt-user:" + gwtVersion);
+                                project.getDependencies()
+                                                .add("implementation", "org.gwtproject:gwt-dev:" + gwtVersion);
+                                project.getDependencies()
+                                                .add("implementation", "org.gwtproject:gwt-codeserver:" + gwtVersion);
+                        }
 
-      SourceSetContainer sourceSets = project.getExtensions()
-          .getByType(SourceSetContainer.class);
-      // Add 'src/main/java' as a resource directory for the main source set
-      SourceSet mainSourceSet = sourceSets.getByName(
-          SourceSet.MAIN_SOURCE_SET_NAME);
-      mainSourceSet.getResources().srcDir("src/main/java");
-    });
-  }
+                        SourceSetContainer sourceSets = project.getExtensions()
+                                        .getByType(SourceSetContainer.class);
+                        // Add 'src/main/java' as a resource directory for the main source set
+                        SourceSet mainSourceSet = sourceSets.getByName(
+                                        SourceSet.MAIN_SOURCE_SET_NAME);
 
-  private void configureGwtTasks(GwtPluginExtension extension) {
-    // Register the GwtCompile task
-    TaskProvider<GwtCompileTask> gwtCompileTask = project.getTasks()
-        .register("gwtCompile", GwtCompileTask.class,
-            new GwtCompileConfig(extension));
-    // Ensure that gwtCompile runs automatically when build is executed
-    project.getTasks().named("build")
-        .configure(buildTask -> buildTask.dependsOn(gwtCompileTask));
+                        log.info("bmh***** mainSourceSet name {}", SourceSet.MAIN_SOURCE_SET_NAME);
+                        log.info("bmh***** print resources {}", mainSourceSet.getResources().getSrcDirs());
+                        log.info("bmh***** print java source dirs {}", mainSourceSet.getJava().getSrcDirs());
+                        mainSourceSet.getResources().srcDir("src/main/java");
+                        log.info("bmh***** updated");
+                        log.info("bmh***** print resources {}", mainSourceSet.getResources().getSrcDirs());
+                        log.info("bmh***** print java source dirs {}", mainSourceSet.getJava().getSrcDirs());
+                        // mainSourceSet.getResources().srcDir("src");
+                });
+        }
 
-    // Register the GwtDevModeTask task
-    TaskProvider<GwtDevModeTask> gwtDevModeTask = project.getTasks()
-        .register("gwtDevMode", GwtDevModeTask.class,
-            new GwtDevModeConfig(extension));
-    // Ensure that gwtDevMode always runs
-    gwtDevModeTask.configure(
-        task -> task.getOutputs().upToDateWhen(t -> false));
+        private void configureGwtTasks(GwtPluginExtension extension) {
+                // Register the GwtCompile task
+                TaskProvider<GwtCompileTask> gwtCompileTask = project.getTasks()
+                                .register("gwtCompile", GwtCompileTask.class,
+                                                new GwtCompileConfig(extension));
+                // Ensure that gwtCompile runs automatically when build is executed
+                project.getTasks().named("build")
+                                .configure(buildTask -> buildTask.dependsOn(gwtCompileTask));
 
-    // Register the GwtSuperDevTask task
-    TaskProvider<GwtSuperDevTask> gwtSuperDevTask = project.getTasks()
-        .register("gwtSuperDev", GwtSuperDevTask.class,
-            new GwtSuperDevConfig(extension));
-    // Ensure that gwtSuperDev always runs
-    gwtSuperDevTask.configure(
-        task -> task.getOutputs().upToDateWhen(t -> false));
+                // Register the GwtDevModeTask task
+                TaskProvider<GwtDevModeTask> gwtDevModeTask = project.getTasks()
+                                .register("gwtDevMode", GwtDevModeTask.class,
+                                                new GwtDevModeConfig(extension));
+                // Ensure that gwtDevMode always runs
+                gwtDevModeTask.configure(
+                                task -> task.getOutputs().upToDateWhen(t -> false));
 
-    // Configure the GWT test tasks
-    project.afterEvaluate(p -> {
-      ListProperty<String> testTasks = extension.getGwtTest().getTestTasks();
-      if (testTasks.isPresent()) {
-        List<String> testTaskNames = testTasks.get();
-        project.getTasks()
-            .withType(Test.class)
-            .matching(t -> testTaskNames.isEmpty() || testTaskNames.contains(
-                t.getName()))
-            .configureEach(new GwtTestConfig(project, extension));
-      }
-    });
-  }
+                // Register the GwtSuperDevTask task
+                TaskProvider<GwtSuperDevTask> gwtSuperDevTask = project.getTasks()
+                                .register("gwtSuperDev", GwtSuperDevTask.class,
+                                                new GwtSuperDevConfig(extension));
+                // Ensure that gwtSuperDev always runs
+                gwtSuperDevTask.configure(
+                                task -> task.getOutputs().upToDateWhen(t -> false));
+
+                // Configure the GWT test tasks
+                project.afterEvaluate(p -> {
+                        ListProperty<String> testTasks = extension.getGwtTest().getTestTasks();
+                        if (testTasks.isPresent()) {
+                                List<String> testTaskNames = testTasks.get();
+                                project.getTasks()
+                                                .withType(Test.class)
+                                                .matching(t -> testTaskNames.isEmpty() || testTaskNames.contains(
+                                                                t.getName()))
+                                                .configureEach(new GwtTestConfig(project, extension));
+                        }
+                });
+        }
 }

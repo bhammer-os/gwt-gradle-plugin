@@ -124,7 +124,7 @@ public abstract class AbstractBaseTask extends JavaExec {
 
     // Log the classpath
     Logger log = getProject().getLogger();
-    getClasspath().getFiles().forEach(file -> log.debug("classpath: {}", file));
+    getClasspath().getFiles().forEach(file -> log.debug("bmh***** classpath: {}", file));
 
     if (getLogLevel().isPresent()) {
       args("-logLevel", getLogLevel().get());
